@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#172b27">
+<title>Promo AI Studio — Poster Maker</title>
+<style>
+:root{--ink:#172b27;--gold:#e8c98e;--paper:#f7f4ed;--muted:#6f7772;--line:#e7e2d8}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,Arial,sans-serif}
+header{background:var(--ink);color:white;padding:22px 18px;text-align:center}
+header h1{margin:0;font-size:25px;letter-spacing:.5px}header p{margin:7px 0 0;color:#e9dfca;font-size:13px}
+main{max-width:980px;margin:22px auto;padding:0 14px 40px;display:grid;grid-template-columns:minmax(280px, .9fr) minmax(280px,1.1fr);gap:18px}
+.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 6px 24px #172b270a}
+h2{font-size:18px;margin:0 0 15px}.field{margin:0 0 13px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+input,textarea,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#fff;color:var(--ink)}
+textarea{min-height:75px;resize:vertical}.hint{font-size:11px;color:var(--muted);margin-top:5px}
+button{border:0;border-radius:11px;padding:13px 15px;font-weight:700;font-size:14px;cursor:pointer}
+.primary{background:var(--ink);color:white;width:100%}.secondary{background:#efe9dc;color:var(--ink);width:100%;margin-top:9px}
+.preview-wrap{background:#f0eee8;border-radius:14px;padding:12px;display:flex;justify-content:center;align-items:flex-start}
+canvas{width:100%;max-width:420px;height:auto;border-radius:7px;box-shadow:0 8px 25px #0002;background:white}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+.actions button{background:#efe9dc;color:var(--ink)}
+.note{font-size:12px;color:var(--muted);line-height:1.5;margin:12px 2px 0}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:0 15px 25px}
+@media(max-width:720px){main{grid-template-columns:1fr;margin-top:14px}.panel{padding:15px}header h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>✨ PROMO AI STUDIO</h1>
+  <p>Create simple, beautiful business promotions</p>
+</header>
+<main>
+<section class="panel">
+  <h2>Isi detail promosi</h2>
+  <div class="field"><label for="business">Nama usaha</label><input id="business" value="RAHAYU CUKUR" maxlength="32"></div>
+  <div class="field"><label for="product">Produk / jasa</label><input id="product" value="POTONG RAMBUT" maxlength="38"></div>
+  <div class="field"><label for="price">Harga / penawaran</label><input id="price" value="MULAI Rp15.000" maxlength="28"></div>
+  <div class="field"><label for="message">Kalimat promosi</label><textarea id="message" maxlength="110">Tampil keren, harga bersahabat! Yuk mampir hari ini.</textarea></div>
+  <div class="field"><label for="contact">Kontak / alamat (opsional)</label><input id="contact" value="Datang langsung — kami siap melayani" maxlength="65"></div>
+  <div class="field"><label for="theme">Warna desain</label>
+    <select id="theme"><option value="dark">Hijau elegan & emas</option><option value="cream">Beige minimalis</option><option value="blue">Biru cerah</option><option value="pink">Pink ceria</option></select>
+  </div>
+  <div class="field"><label for="format">Ukuran poster</label>
+    <select id="format"><option value="square">Kotak — Instagram / Facebook</option><option value="story">Story — WhatsApp / Instagram</option><option value="portrait">Portrait — poster</option></select>
+  </div>
+  <button class="primary" id="update">✨ Perbarui desain</button>
+  <p class="note">Versi awal ini membuat poster dari template. Fitur AI gambar dan AI copywriting akan ditambahkan pada tahap berikutnya.</p>
+</section>
+<section class="panel">
+  <h2>Preview poster</h2>
+  <div class="preview-wrap"><canvas id="poster" width="1080" height="1080" aria-label="Preview poster promosi"></canvas></div>
+  <div class="actions">
+    <button id="download">⬇ Download PNG</button>
+    <button id="reset">↺ Reset contoh</button>
+  </div>
+  <p class="note">Tip: gunakan kalimat singkat dan pastikan harga serta kontak sudah benar sebelum mengunduh.</p>
+</section>
+</main>
+<footer>Promo AI Studio · Prototype v1 · Buat promosi lebih mudah</footer>
+<script>
+const $=id=>document.getElementById(id), canvas=$('poster'), ctx=canvas.getContext('2d');
+const defaults={business:'RAHAYU CUKUR',product:'POTONG RAMBUT',price:'MULAI Rp15.000',message:'Tampil keren, harga bersahabat! Yuk mampir hari ini.',contact:'Datang langsung — kami siap melayani',theme:'dark',format:'square'};
+const palettes={
+ dark:{bg:'#172b27',accent:'#e8c98e',text:'#fffaf0',sub:'#d9d0bd'},
+ cream:{bg:'#eee6d7',accent:'#9a7250',text:'#302b25',sub:'#74695d'},
+ blue:{bg:'#dcecf5',accent:'#22658b',text:'#15364b',sub:'#42677a'},
+ pink:{bg:'#f7e2e7',accent:'#a64e68',text:'#4d2935',sub:'#805363'}
+};
+function wrap(text,maxWidth,font){ctx.font=font;let words=text.split(/\s+/),lines=[],line='';for(const w of words){let test=line?line+' '+w:w;if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=w}else line=test}if(line)lines.push(line);return lines}
+function draw(){
+ const format=$('format').value;
+ canvas.width=1080;canvas.height=format==='story'?1920:format==='portrait'?1350:1080;
+ const w=canvas.width,h=canvas.height,p=palettes[$('theme').value];
+ ctx.fillStyle=p.bg;ctx.fillRect(0,0,w,h);
+ // Decorative frame and ornaments
+ ctx.strokeStyle=p.accent;ctx.lineWidth=5;ctx.strokeRect(48,48,w-96,h-96);
+ ctx.globalAlpha=.22;ctx.beginPath();ctx.arc(w-100,150,210,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(100,h-100,170,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
+ ctx.fillStyle=p.accent;ctx.textAlign='center';ctx.font='bold 28px Arial';ctx.fillText('✦  SPECIAL PROMOTION  ✦',w/2,h*.19);
+ ctx.fillStyle=p.text;ctx.font='bold 72px Arial';
+ const business=($('business').value||'NAMA USAHA').toUpperCase();
+ let lines=wrap(business,w-180,'bold 72px Arial');let y=h*.32;
+ lines.slice(0,2).forEach(line=>{ctx.fillText(line,w/2,y);y+=88});
+ ctx.fillStyle=p.accent;ctx.font='bold 82px Arial';
+ let productLines=wrap(($('product').value||'PRODUK / JASA').toUpperCase(),w-150,'bold 82px Arial');
+ y+=45;productLines.slice(0,2).forEach(line=>{ctx.fillText(line,w/2,y);y+=98});
+ // Price panel
+ const boxY=h*.57,boxH=h*.16;ctx.fillStyle=p.accent;ctx.beginPath();ctx.roundRect(105,boxY,w-210,boxH,28);ctx.fill();
+ ctx.fillStyle=p.bg;ctx.font='bold 62px Arial';ctx.fillText(($('price').value||'PROMO SPESIAL').toUpperCase(),w/2,boxY+boxH*.62);
+ // Message
+ ctx.fillStyle=p.text;ctx.font='36px Arial';let msg=wrap($('message').value||'',w-210,'36px Arial');let my=h*.80;
+ msg.slice(0,3).forEach(line=>{ctx.fillText(line,w/2,my);my+=48});
+ ctx.fillStyle=p.sub;ctx.font='27px Arial';let contact=wrap($('contact').value||'',w-180,'27px Arial');
+ let cy=h*.91;contact.slice(0,2).forEach(line=>{ctx.fillText(line,w/2,cy);cy+=36});
+}
+['business','product','price','message','contact','theme','format'].forEach(id=>$(id).addEventListener('input',draw));
+$('update').addEventListener('click',draw);
+$('download').addEventListener('click',()=>{draw();const a=document.createElement('a');a.download='promo-ai-studio-poster.png';a.href=canvas.toDataURL('image/png');a.click()});
+$('reset').addEventListener('click',()=>{Object.entries(defaults).forEach(([k,v])=>$(k).value=v);draw()});
+draw();
+</script>
+</body>
+</html>
