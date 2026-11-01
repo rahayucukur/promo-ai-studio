@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PROMO AI STUDIO Versi 2</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f2ec;color:#24332b;font-family:Arial,sans-serif}
+header{background:#173f32;color:white;text-align:center;padding:22px}header h1{margin:0}main{max-width:1000px;margin:18px auto;padding:0 14px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+section{background:white;padding:17px;border-radius:14px;box-shadow:0 3px 15px #0001}h2{font-size:18px;margin-top:0}
+label{display:block;font-weight:bold;font-size:13px;margin:10px 0 5px}input,textarea,select{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;font:inherit}textarea{min-height:75px}
+button{padding:11px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;background:#216448;color:white;margin:5px 2px}
+.template{background:#eee;color:#222;font-size:12px}.template.active{outline:2px solid #216448}
+canvas{width:100%;height:auto;background:white;border-radius:8px}.preview{background:#eee;padding:8px;border-radius:10px}
+small,.status,p{color:#68736c;font-size:12px;line-height:1.5}video{width:100%;display:none;margin-top:10px}
+@media(max-width:720px){main{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><h1>PROMO AI STUDIO</h1><p>Poster dan video promosi untuk usaha Anda — Versi 2</p></header>
+<main>
+<section>
+<h2>1. Detail promosi</h2>
+<label>Nama usaha</label><input id="business" value="RAHAYU CUKUR" maxlength="40">
+<label>Produk / jasa</label><input id="product" value="POTONG RAMBUT" maxlength="50">
+<label>Harga / penawaran</label><input id="price" value="MULAI Rp15.000" maxlength="35">
+<label>Kalimat promosi</label><textarea id="copy">Tampil keren, harga bersahabat! Yuk mampir hari ini.</textarea>
+<label>Kontak / alamat</label><input id="contact" value="Datang langsung — kami siap melayani">
+<label>Upload foto dari galeri</label><input id="photo" type="file" accept="image/*"><small>Foto diproses di perangkat Anda, tidak diunggah ke server.</small>
+<label>Pilih template</label>
+<div id="templates">
+<button class="template active" data-t="elegant">Elegan</button><button class="template" data-t="minimal">Minimalis</button><button class="template" data-t="cheerful">Ceria</button><button class="template" data-t="modern">Modern</button><button class="template" data-t="premium">Premium</button>
+</div>
+<label>Ukuran poster</label><select id="format"><option value="square">Kotak</option><option value="story">Story 9:16</option><option value="portrait">Portrait 4:5</option></select>
+<button id="refresh">Perbarui desain</button><button id="reset" style="background:#ddd;color:#222">Reset contoh</button>
+</section>
+<section>
+<h2>2. Preview poster</h2><div class="preview"><canvas id="poster" width="1080" height="1080"></canvas></div>
+<button id="png">Download poster PNG</button><div class="status" id="pstatus">Siap diedit.</div>
+<hr><h2>3. Video promosi sederhana</h2>
+<p>Video dibuat dari poster dengan gerakan zoom dan teks. Hasilnya WebM, bukan AI video atau MP4.</p>
+<label>Durasi</label><select id="duration"><option value="6">6 detik</option><option value="10">10 detik</option><option value="15">15 detik</option></select>
+<button id="make">Buat video promosi</button><video id="vid" controls playsinline></video><br>
+<button id="webm" disabled>Download video WebM</button><div class="status" id="vstatus">Jangan tutup halaman saat video dibuat.</div>
+</section></main>
+<script>
+const $=id=>document.getElementById(id),c=$('poster'),x=c.getContext('2d');
+let theme='elegant',photo=null,blob=null,url=null;
+const pal={
+elegant:['#f2eadc','#233b30','#b38a50','#59675e'],
+minimal:['#fff','#171717','#555','#666'],
+cheerful:['#fff0c9','#593d2b','#e77845','#795b42'],
+modern:['#dce9ef','#172e43','#287c91','#405a6b'],
+premium:['#172b25','#fff4dc','#d8b66b','#e6ddc8']};
+function draw(){
+let f=$('format').value;c.width=1080;c.height=f==='story'?1920:f==='portrait'?1350:1080;
+let w=c.width,h=c.height,[bg,ink,accent,sub]=pal[theme];
+x.fillStyle=bg;x.fillRect(0,0,w,h);x.strokeStyle=accent;x.lineWidth=5;x.strokeRect(35,35,w-70,h-70);
+x.textAlign='center';x.fillStyle=ink;x.font='bold 48px Arial';x.fillText(($('business').value||'NAMA USAHA').toUpperCase().slice(0,35),w/2,115);
+x.fillStyle=accent;x.fillRect(w*.36,145,w*.28,6);
+let py=h*.20,ph=h*.36,pw=w*.78;
+if(photo){let r=Math.min(pw/photo.width,ph/photo.height),dw=photo.width*r,dh=photo.height*r;x.drawImage(photo,(w-dw)/2,py+(ph-dh)/2,dw,dh)}
+else{x.fillStyle=theme==='premium'?'#29483d':'#fff';x.fillRect((w-pw)/2,py,pw,ph);x.fillStyle=accent;x.font='bold 65px Arial';x.fillText('✦',w/2,py+ph*.48);x.fillStyle=sub;x.font='29px Arial';x.fillText('Tambahkan foto usaha / produk',w/2,py+ph*.70)}
+let y=h*.66;x.fillStyle=ink;x.font='bold 72px Arial';x.fillText(($('product').value||'PRODUK / JASA').slice(0,28),w/2,y);
+y+=85;x.fillStyle=accent;x.font='bold 52px Arial';x.fillText($('price').value.slice(0,32),w/2,y);
+y+=65;x.fillStyle=sub;x.font='32px Arial';x.fillText($('copy').value.slice(0,55),w/2,y);
+x.fillStyle=ink;x.font='bold 27px Arial';x.fillText($('contact').value.slice(0,55),w/2,h-90);
+$('pstatus').textContent='Preview diperbarui • Template '+theme;
+}
+$('photo').onchange=e=>{let file=e.target.files[0];if(!file)return;let r=new FileReader();r.onload=()=>{let im=new Image();im.onload=()=>{photo=im;draw()};im.src=r.result};r.readAsDataURL(file)};
+document.querySelectorAll('.template').forEach(b=>b.onclick=()=>{document.querySelectorAll('.template').forEach(q=>q.classList.remove('active'));b.classList.add('active');theme=b.dataset.t;draw()});
+$('refresh').onclick=draw;$('format').onchange=draw;
+['business','product','price','copy','contact'].forEach(id=>$(id).oninput=draw);
+$('reset').onclick=()=>{['business','product','price','copy','contact'].forEach((id,i)=>$(id).value=['RAHAYU CUKUR','POTONG RAMBUT','MULAI Rp15.000','Tampil keren, harga bersahabat! Yuk mampir hari ini.','Datang langsung — kami siap melayani'][i]);photo=null;$('photo').value='';$('format').value='square';theme='elegant';document.querySelectorAll('.template').forEach(b=>b.classList.toggle('active',b.dataset.t==='elegant'));draw()};
+$('png').onclick=()=>{draw();let a=document.createElement('a');a.download='promo-ai-studio-poster.png';a.href=c.toDataURL('image/png');a.click()};
+$('make').onclick=()=>{
+if(!window.MediaRecorder||!c.captureStream){$('vstatus').textContent='Browser belum mendukung rekam video. Coba Chrome terbaru.';return}
+draw();$('make').disabled=true;$('webm').disabled=true;
+let seconds=+$('duration').value,stream=c.captureStream(25),mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm',rec;
+try{rec=new MediaRecorder(stream,{mimeType:mime})}catch(e){$('vstatus').textContent='Tidak dapat memulai perekaman.';$('make').disabled=false;return}
+let parts=[],base=document.createElement('canvas');base.width=c.width;base.height=c.height;base.getContext('2d').drawImage(c,0,0);
+rec.ondataavailable=e=>{if(e.data.size)parts.push(e.data)};
+rec.onstop=()=>{blob=new Blob(parts,{type:'video/webm'});if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(blob);$('vid').src=url;$('vid').style.display='block';$('webm').disabled=false;$('make').disabled=false;$('vstatus').textContent='Video selesai. Silakan putar preview atau download.';stream.getTracks().forEach(t=>t.stop())};
+rec.start();let start=performance.now();
+function frame(now){if(rec.state!=='recording')return;let elapsed=(now-start)/1000,progress=Math.min(elapsed/seconds,1),zoom=1+.025*Math.sin(progress*Math.PI),sw=base.width/zoom,sh=base.height/zoom;
+x.clearRect(0,0,c.width,c.height);x.drawImage(base,(base.width-sw)/2,(base.height-sh)/2,sw,sh,0,0,c.width,c.height);
+x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,c.height-125,c.width,125);x.fillStyle='#fff';x.font='bold 40px Arial';x.textAlign='center';x.fillText('PROMO SPESIAL • '+$('business').value.slice(0,25),c.width/2,c.height-55);
+if(elapsed<seconds)requestAnimationFrame(frame);else rec.stop()}
+$('vstatus').textContent='Sedang merekam video...';requestAnimationFrame(frame);
+};
+$('webm').onclick=()=>{if(!blob)return;let a=document.createElement('a');a.href=url;a.download='promo-ai-studio-video.webm';a.click()};
+draw();
+</script></body></html>
